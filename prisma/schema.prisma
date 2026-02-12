@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  estimates Estimate[]
+}
+
+model Estimate {
+  id                String             @id @default(cuid())
+  customerName      String
+  jobName           String
+  address           String             @default("")
+  notes             String             @default("")
+  status            String             @default("draft")
+  shareToken        String?            @unique
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  userId            String
+  user              User               @relation(fields: [userId], references: [id])
+  lineItems         LineItem[]
+  customerResponses CustomerResponse[]
+}
+
+model LineItem {
+  id         String   @id @default(cuid())
+  name       String
+  unit       String   @default("ea")
+  qty        Float    @default(1)
+  unitCost   Float    @default(0)
+  laborHours Float    @default(0)
+  laborRate  Float    @default(0)
+  markupPct  Float    @default(0)
+  sortOrder  Int      @default(0)
+  estimateId String
+  estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+}
+
+model CustomerResponse {
+  id         String   @id @default(cuid())
+  estimateId String
+  estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  status     String
+  message    String   @default("")
+  createdAt  DateTime @default(now())
+}
