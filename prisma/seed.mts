@@ -1,14 +1,12 @@
-import "dotenv/config";
-import { hashSync } from "bcryptjs";
+await import("dotenv/config");
 
-const adapterMod = await import("@prisma/adapter-better-sqlite3");
-const PrismaBetterSqlite3 = adapterMod.PrismaBetterSqlite3;
+const { hashSync } = await import("bcryptjs");
+const { PrismaLibSql } = await import("@prisma/adapter-libsql");
+const { PrismaClient } = await import("../src/generated/prisma/client.js");
 
-const clientMod = await import("../src/generated/prisma/client.js");
-const PrismaClient = clientMod.PrismaClient;
-
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL!,
+const adapter = new PrismaLibSql({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN,
 });
 const prisma = new PrismaClient({ adapter });
 
