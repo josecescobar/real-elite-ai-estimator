@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   if (error) return error;
 
   const body = await req.json();
-  const { customerName, jobName, address, notes, lineItems } = body;
+  const { customerName, jobName, address, notes, description, clientId, projectId, lineItems } = body;
 
   const estimate = await prisma.estimate.create({
     data: {
@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
       jobName: jobName || "",
       address: address || "",
       notes: notes || "",
+      description: description || "",
+      clientId: clientId || null,
+      projectId: projectId || null,
       userId: user!.id,
       lineItems: {
         create: (lineItems || []).map(

@@ -38,7 +38,7 @@ export async function PUT(
   if (error) return error;
 
   const body = await req.json();
-  const { customerName, jobName, address, notes, lineItems } = body;
+  const { customerName, jobName, address, notes, description, clientId, projectId, lineItems } = body;
 
   await prisma.lineItem.deleteMany({ where: { estimateId: id } });
 
@@ -49,6 +49,9 @@ export async function PUT(
       jobName,
       address: address || "",
       notes: notes || "",
+      description: description || "",
+      clientId: clientId || null,
+      projectId: projectId || null,
       lineItems: {
         create: (lineItems || []).map(
           (

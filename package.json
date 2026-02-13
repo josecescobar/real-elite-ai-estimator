@@ -12,6 +12,7 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.74.0",
     "@libsql/client": "^0.17.0",
     "@prisma/adapter-better-sqlite3": "^7.4.0",
     "@prisma/adapter-libsql": "^7.4.0",

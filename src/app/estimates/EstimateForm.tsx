@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
+interface AIProvider {
+  id: string;
+  name: string;
+  model: string;
+}
 
 interface LineItem {
   name: string;
@@ -13,12 +19,25 @@ interface LineItem {
   markupPct: number;
 }
 
+interface ClientOption {
+  id: string;
+  name: string;
+}
+
+interface ProjectOption {
+  id: string;
+  name: string;
+}
+
 interface EstimateData {
   id?: string;
   customerName: string;
   jobName: string;
   address: string;
   notes: string;
+  description?: string;
+  clientId?: string | null;
+  projectId?: string | null;
   status?: string;
   shareToken?: string | null;
   lineItems: LineItem[];
@@ -52,19 +71,42 @@ const statusColors: Record<string, string> = {
   changes_requested: "bg-yellow-100 text-yellow-700",
 };
 
-export default function EstimateForm({ initial }: { initial?: EstimateData }) {
+export default function EstimateForm({
+  initial,
+  initialDescription,
+  initialJobType,
+}: {
+  initial?: EstimateData;
+  initialDescription?: string;
+  initialJobType?: string;
+}) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [customerName, setCustomerName] = useState(initial?.customerName || "");
-  const [jobName, setJobName] = useState(initial?.jobName || "");
+  const [jobName, setJobName] = useState(initial?.jobName || initialJobType || "");
   const [address, setAddress] = useState(initial?.address || "");
   const [notes, setNotes] = useState(initial?.notes || "");
+  const [description, setDescription] = useState(initial?.description || initialDescription || "");
+  const [clientId, setClientId] = useState(initial?.clientId || "");
+  const [projectId, setProjectId] = useState(initial?.projectId || "");
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>(
     initial?.lineItems?.length ? initial.lineItems : [{ ...emptyLineItem }]
   );
   const [status, setStatus] = useState(initial?.status || "draft");
   const [shareToken, setShareToken] = useState(initial?.shareToken || null);
+
+  // Fetch clients and projects
+  useEffect(() => {
+    fetch("/api/clients").then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) setClients(data.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })));
+    }).catch(() => {});
+    fetch("/api/projects").then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) setProjects(data.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
+    }).catch(() => {});
+  }, []);
 
   // AI Suggest state
   const [showAiModal, setShowAiModal] = useState(false);
@@ -72,6 +114,39 @@ export default function EstimateForm({ initial }: { initial?: EstimateData }) {
   const [aiDescription, setAiDescription] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [aiProviders, setAiProviders] = useState<AIProvider[]>([]);
+  const [aiSelectedProvider, setAiSelectedProvider] = useState("");
+  const [aiProvidersLoading, setAiProvidersLoading] = useState(false);
+
+  // Pre-populate AI modal with description/jobType when opened
+  useEffect(() => {
+    if (!showAiModal) return;
+    if (!aiDescription && description) setAiDescription(description);
+    if (!aiJobType && jobName) setAiJobType(jobName);
+  }, [showAiModal, aiDescription, description, aiJobType, jobName]);
+
+  // Fetch available AI providers when modal opens
+  useEffect(() => {
+    if (!showAiModal) return;
+    let cancelled = false;
+    setAiProvidersLoading(true);
+    fetch("/api/ai/providers")
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.providers?.length) {
+          setAiProviders(data.providers);
+          if (!aiSelectedProvider) {
+            setAiSelectedProvider(data.providers[0].id);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setAiProvidersLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [showAiModal, aiSelectedProvider]);
 
   // Share state
   const [sharing, setSharing] = useState(false);
@@ -108,7 +183,7 @@ export default function EstimateForm({ initial }: { initial?: EstimateData }) {
   async function handleSave() {
     setSaving(true);
     try {
-      const payload = { customerName, jobName, address, notes, lineItems };
+      const payload = { customerName, jobName, address, notes, description, clientId: clientId || null, projectId: projectId || null, lineItems };
       const url = initial?.id ? `/api/estimates/${initial.id}` : "/api/estimates";
       const method = initial?.id ? "PUT" : "POST";
       const res = await fetch(url, {
@@ -151,7 +226,7 @@ export default function EstimateForm({ initial }: { initial?: EstimateData }) {
       const res = await fetch("/api/ai/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobType: aiJobType, description: aiDescription }),
+        body: JSON.stringify({ jobType: aiJobType, description: aiDescription, provider: aiSelectedProvider }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to get suggestions");
@@ -253,6 +328,42 @@ export default function EstimateForm({ initial }: { initial?: EstimateData }) {
               onChange={(e) => setNotes(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               placeholder="Any special notes..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+            <select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">No client</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">No project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Project Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              rows={3}
+              placeholder="Detailed project description for AI suggestions..."
             />
           </div>
         </div>
@@ -580,6 +691,26 @@ export default function EstimateForm({ initial }: { initial?: EstimateData }) {
               {aiError && (
                 <div className="bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm">{aiError}</div>
               )}
+              {aiProvidersLoading ? (
+                <div className="text-sm text-gray-400">Loading providers...</div>
+              ) : aiProviders.length > 1 ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">AI Provider</label>
+                  <select
+                    value={aiSelectedProvider}
+                    onChange={(e) => setAiSelectedProvider(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm"
+                  >
+                    {aiProviders.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : aiProviders.length === 1 ? (
+                <div className="text-sm text-gray-500">
+                  Using <span className="font-medium text-gray-700">{aiProviders[0].name}</span>
+                </div>
+              ) : null}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Job Type <span className="text-gray-400">(optional)</span>

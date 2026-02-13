@@ -12,6 +12,8 @@ export default defineConfig({
     seed: "npx tsx prisma/seed.mts",
   },
   datasource: {
-    url: `${tursoUrl}?authToken=${authToken}`,
+    url: process.env["PRISMA_MIGRATE_LOCAL"]
+      ? "file:./prisma/dev.db"
+      : `${tursoUrl}?authToken=${authToken}`,
   },
 });

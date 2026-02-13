@@ -35,6 +35,9 @@ export default async function EditEstimatePage({
           jobName: estimate.jobName,
           address: estimate.address,
           notes: estimate.notes,
+          description: estimate.description,
+          clientId: estimate.clientId,
+          projectId: estimate.projectId,
           status: estimate.status,
           shareToken: estimate.shareToken,
           lineItems: estimate.lineItems.map((li) => ({

@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Real Elite AI Estimator
+
+A professional construction estimating web app built with Next.js, Prisma, and SQLite.
+
+## Features
+
+- **Estimate Builder** - Add/edit/delete line items with materials, labor, and markup calculations
+- **Live Totals** - Real-time materials, labor, markup, and grand total calculations
+- **Estimates List** - View all saved estimates, sorted by most recent
+- **PDF Export** - Download customer-friendly PDF summaries
+- **Mobile Responsive** - Works on desktop and mobile devices
+
+## Tech Stack
+
+- **Next.js 16** (App Router) + TypeScript
+- **Tailwind CSS v4** for styling
+- **Prisma v7** + SQLite for data storage
+- **PDFKit** for PDF generation
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- npm
+
+### Setup & Run
 
 ```bash
+cd web
+
+# Install dependencies
+npm install
+
+# Generate Prisma client
+npx prisma generate
+
+# Run database migrations
+npx prisma migrate dev
+
+# Seed with sample data
+npx prisma db seed
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to use the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+web/
+├── prisma/
+│   ├── schema.prisma      # Database schema (Estimate + LineItem models)
+│   ├── migrations/        # Database migrations
+│   └── seed.mts           # Sample data seed script
+├── src/
+│   ├── app/
+│   │   ├── api/estimates/          # REST API routes
+│   │   │   ├── route.ts            # GET all, POST new
+│   │   │   └── [id]/
+│   │   │       ├── route.ts        # GET one, PUT update, DELETE
+│   │   │       └── pdf/route.ts    # PDF export endpoint
+│   │   ├── estimates/
+│   │   │   ├── page.tsx            # Estimates list page
+│   │   │   ├── new/page.tsx        # New estimate page
+│   │   │   ├── [id]/page.tsx       # Edit estimate page
+│   │   │   └── EstimateForm.tsx    # Shared estimate form component
+│   │   ├── layout.tsx              # App layout with navigation
+│   │   └── page.tsx                # Home page
+│   ├── generated/prisma/          # Generated Prisma client
+│   └── lib/prisma.ts              # Prisma client singleton
+├── .env                           # DATABASE_URL config
+└── prisma.config.ts               # Prisma configuration
+```
 
-## Learn More
+## Line Item Fields
 
-To learn more about Next.js, take a look at the following resources:
+Each line item includes:
+- **Name** - Description of the work/material
+- **Unit** - Unit of measurement (ea, sqft, lnft, job, hr, ton, gal)
+- **Qty** - Quantity
+- **Unit Cost** - Cost per unit (materials)
+- **Labor Hours** - Hours of labor
+- **Labor Rate** - Hourly labor rate
+- **Markup %** - Markup percentage on (materials + labor)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment Variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | SQLite database path | `file:./dev.db` |
