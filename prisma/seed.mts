@@ -11,9 +11,25 @@ const adapter = new PrismaLibSql({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // Safety guard: this seed wipes ALL data. Refuse to run against a remote
+  // database unless explicitly forced, so a stray TURSO_DATABASE_URL can't
+  // nuke production.
+  const dbUrl = process.env.TURSO_DATABASE_URL ?? "";
+  const isLocalFile = dbUrl.startsWith("file:");
+  if (!isLocalFile && process.env.SEED_FORCE !== "1") {
+    throw new Error(
+      `Refusing to seed a non-local database (${dbUrl || "unset"}). ` +
+        `Set SEED_FORCE=1 to override.`
+    );
+  }
+
+  // Delete in FK-safe order: children first, then clients/projects (which
+  // Users restrict), then users.
   await prisma.customerResponse.deleteMany();
   await prisma.lineItem.deleteMany();
   await prisma.estimate.deleteMany();
+  await prisma.client.deleteMany();
+  await prisma.project.deleteMany();
   await prisma.user.deleteMany();
 
   const user = await prisma.user.create({

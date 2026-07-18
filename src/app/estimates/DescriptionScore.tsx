@@ -52,9 +52,8 @@ export default function DescriptionScore({ description }: Props) {
 
   // Color based on score
   let ringColor = "text-red-500";
-  let bgColor = "text-red-50";
-  if (clientScore.score > 6) { ringColor = "text-green-500"; bgColor = "text-green-50"; }
-  else if (clientScore.score > 3) { ringColor = "text-yellow-500"; bgColor = "text-yellow-50"; }
+  if (clientScore.score > 6) ringColor = "text-green-500";
+  else if (clientScore.score > 3) ringColor = "text-yellow-500";
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-5">

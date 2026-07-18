@@ -15,7 +15,6 @@ export interface ScoreResult {
 const dimensionPatterns = /\d+\s*(sq\s*ft|sqft|square\s*feet|lnft|linear\s*feet|ft|feet|inches|in|yards|yd|meters|m|cm)\b/i;
 const materialPatterns = /\b(wood|lumber|tile|ceramic|porcelain|granite|marble|quartz|laminate|vinyl|carpet|hardwood|concrete|drywall|plywood|shingles|metal|steel|aluminum|copper|pvc|pipe|wire|paint|stain|grout|mortar|insulation|fiberglass|foam)\b/i;
 const scopeVerbPatterns = /\b(install|replace|repair|remove|demolish|build|construct|remodel|renovate|upgrade|refinish|resurface|paint|tile|plumb|wire|frame|insulate|seal|waterproof|grade|excavate|pour)\b/i;
-const numberPattern = /\b\d+(\.\d+)?\b/;
 
 export function scoreDescription(text: string): ScoreResult {
   const trimmed = text.trim();

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth-helpers";
+import { getAuthUser, validateRelationOwnership } from "@/lib/auth-helpers";
 import { NextRequest, NextResponse } from "next/server";
 
 async function getOwnedEstimate(id: string, userId: string) {
@@ -40,46 +40,52 @@ export async function PUT(
   const body = await req.json();
   const { customerName, jobName, address, notes, description, clientId, projectId, lineItems } = body;
 
-  await prisma.lineItem.deleteMany({ where: { estimateId: id } });
+  const relError = await validateRelationOwnership(user!.id, clientId, projectId);
+  if (relError) return relError;
 
-  const estimate = await prisma.estimate.update({
-    where: { id },
-    data: {
-      customerName,
-      jobName,
-      address: address || "",
-      notes: notes || "",
-      description: description || "",
-      clientId: clientId || null,
-      projectId: projectId || null,
-      lineItems: {
-        create: (lineItems || []).map(
-          (
-            item: {
-              name: string;
-              unit: string;
-              qty: number;
-              unitCost: number;
-              laborHours: number;
-              laborRate: number;
-              markupPct: number;
-            },
-            i: number
-          ) => ({
-            name: item.name || "",
-            unit: item.unit || "ea",
-            qty: item.qty || 0,
-            unitCost: item.unitCost || 0,
-            laborHours: item.laborHours || 0,
-            laborRate: item.laborRate || 0,
-            markupPct: item.markupPct || 0,
-            sortOrder: i,
-          })
-        ),
+  // Delete-and-recreate the line items atomically: if the update fails, the
+  // transaction rolls back and the existing line items are preserved.
+  const [, estimate] = await prisma.$transaction([
+    prisma.lineItem.deleteMany({ where: { estimateId: id } }),
+    prisma.estimate.update({
+      where: { id },
+      data: {
+        customerName,
+        jobName,
+        address: address || "",
+        notes: notes || "",
+        description: description || "",
+        clientId: clientId || null,
+        projectId: projectId || null,
+        lineItems: {
+          create: (lineItems || []).map(
+            (
+              item: {
+                name: string;
+                unit: string;
+                qty: number;
+                unitCost: number;
+                laborHours: number;
+                laborRate: number;
+                markupPct: number;
+              },
+              i: number
+            ) => ({
+              name: item.name || "",
+              unit: item.unit || "ea",
+              qty: item.qty || 0,
+              unitCost: item.unitCost || 0,
+              laborHours: item.laborHours || 0,
+              laborRate: item.laborRate || 0,
+              markupPct: item.markupPct || 0,
+              sortOrder: i,
+            })
+          ),
+        },
       },
-    },
-    include: { lineItems: { orderBy: { sortOrder: "asc" } } },
-  });
+      include: { lineItems: { orderBy: { sortOrder: "asc" } } },
+    }),
+  ]);
 
   return NextResponse.json(estimate);
 }
