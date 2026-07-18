@@ -22,7 +22,7 @@
 
 ## P0 — Correctness & data safety (do these first)
 
-- [ ] **Fix the build script for deployment.** `npm run build` is just `next build`, but the Prisma client output (`src/generated/prisma`) is gitignored and Prisma 7 no longer auto-generates on install. A fresh clone / Vercel build fails until generate runs (verified in audit). Change `package.json`: `"build": "prisma generate && next build"`.
+- [ ] **Make the repo's build script self-contained.** `npm run build` is just `next build`, but the Prisma client output (`src/generated/prisma`) is gitignored and Prisma 7 no longer auto-generates on install — a fresh clone fails to build (verified in audit). Vercel deploys succeed *today* only because the Vercel project has a dashboard build-command override, `npx prisma generate && next build` (confirmed in the PR #1 preview-deploy logs). Move that into `package.json` (`"build": "prisma generate && next build"`) so local builds, CI, and any new environment work without hidden dashboard config.
 - [ ] **Make estimate updates transactional.** `PUT /api/estimates/[id]` (`src/app/api/estimates/[id]/route.ts:43`) does `lineItem.deleteMany()` and then a separate `estimate.update()` with nested creates. If the update fails (bad `clientId`, network blip to Turso), the estimate's line items are already gone. Wrap both in `prisma.$transaction`.
 - [ ] **Validate `clientId` / `projectId` ownership.** `POST /api/estimates` and `PUT /api/estimates/[id]` accept any `clientId`/`projectId` without checking the client/project belongs to the requesting user. A crafted request can attach an estimate to another user's client, and that estimate (with totals) then renders on the other user's client detail page. Verify ownership before linking; reject with 400 otherwise.
 - [ ] **Fix the seed script.** Three problems in `prisma/seed.mts` / `package.json`:
@@ -46,6 +46,7 @@
 - [ ] **Add CI.** No tests or CI exist. Minimum viable: a GitHub Action running `prisma generate`, `tsc --noEmit`, `eslint`, `next build` on PRs.
 - [ ] **Document/support local dev without Turso.** `src/lib/prisma.ts` requires `TURSO_DATABASE_URL`; the libSQL adapter accepts `file:` URLs, so local dev is `TURSO_DATABASE_URL="file:./prisma/dev.db"` plus `PRISMA_MIGRATE_LOCAL=1` for migrations (that switch already exists in `prisma.config.ts`). Now covered in the README — keep it working.
 - [ ] **Verify PDF export on Vercel.** PDFKit needs its `.afm` font files at runtime; `serverExternalPackages: ["pdfkit"]` should handle it, but this is a known deployment gotcha — test `/api/estimates/[id]/pdf` on a real Vercel deploy before relying on it.
+- [ ] **Triage `npm audit`.** The Vercel build reports 23 vulnerabilities (2 low, 8 moderate, 13 high). Likely mostly transitive; run `npm audit`, upgrade what's real, document what's accepted.
 
 ## P3 — Code quality
 
@@ -105,6 +106,7 @@ The audit backlog above is about making what exists solid. These are the next *f
 | `eslint` | ✅ 2 warnings (unused vars), 0 errors |
 | `next build` (after `prisma generate`) | ✅ all 24 routes compile |
 | `next build` on fresh clone (no generate) | ❌ fails — see P0 build-script item |
+| Vercel preview deploy (PR #1) | ✅ succeeds — dashboard build-command override runs `prisma generate` (see P0) |
 | Prisma schema ↔ migrations | ✅ in sync (2 migrations) |
 | Secrets in repo | ✅ none (`.env*` gitignored) |
 | Per-user authorization on API routes | ✅ consistent ownership checks (except the P0 clientId/projectId gap) |

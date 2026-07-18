@@ -101,5 +101,5 @@ Each line item: **name**, **unit** (`ea, sqft, lnft, job, hr, ton, gal`), **qty*
 ## Deployment notes (Vercel + Turso)
 
 - Set all required env vars in Vercel.
-- The build must run `prisma generate` before `next build` (see PLAN.md P0 — the default build script doesn't yet).
+- The build must run `prisma generate` before `next build`. The Vercel project currently does this via a dashboard build-command override (`npx prisma generate && next build`); PLAN.md P0 proposes moving it into `package.json` so builds work everywhere, not just on Vercel.
 - Migrations are applied against Turso with `npx prisma migrate deploy` (locally or in CI), not during the Vercel build.
