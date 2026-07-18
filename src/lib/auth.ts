@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compareSync } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, ipFromHeaders } from "@/lib/rate-limit";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -10,11 +11,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        const email = credentials?.email as string | undefined;
+      async authorize(credentials, request) {
+        const rawEmail = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
-        if (!email || !password) return null;
+        if (!rawEmail || !password) return null;
 
+        // Throttle repeated attempts per IP to slow brute-force / credential
+        // stuffing. Over-limit fails closed as a generic auth error.
+        const ip = ipFromHeaders((request as Request | undefined)?.headers ?? null);
+        if (!rateLimit(`login:${ip}`, 10, 5 * 60_000)) return null;
+
+        const email = rawEmail.trim().toLowerCase();
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) return null;
 
