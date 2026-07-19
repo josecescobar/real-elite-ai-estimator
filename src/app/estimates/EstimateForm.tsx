@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { lineItemTotal, estimateTotals } from "@/lib/estimate-calculations";
 
 interface AIProvider {
   id: string;
@@ -52,13 +53,6 @@ const emptyLineItem: LineItem = {
   laborRate: 0,
   markupPct: 0,
 };
-
-function calcLineTotal(item: LineItem) {
-  const materials = item.qty * item.unitCost;
-  const labor = item.laborHours * item.laborRate;
-  const subtotal = materials + labor;
-  return subtotal + subtotal * (item.markupPct / 100);
-}
 
 function fmt(n: number) {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -167,18 +161,8 @@ export default function EstimateForm({
   };
 
   // Live totals
-  let totalMaterials = 0;
-  let totalLabor = 0;
-  let totalMarkup = 0;
-  for (const item of lineItems) {
-    const materials = item.qty * item.unitCost;
-    const labor = item.laborHours * item.laborRate;
-    const subtotal = materials + labor;
-    totalMaterials += materials;
-    totalLabor += labor;
-    totalMarkup += subtotal * (item.markupPct / 100);
-  }
-  const grandTotal = totalMaterials + totalLabor + totalMarkup;
+  const { materials: totalMaterials, labor: totalLabor, markup: totalMarkup, total: grandTotal } =
+    estimateTotals(lineItems);
 
   async function handleSave() {
     setSaving(true);
@@ -564,7 +548,7 @@ export default function EstimateForm({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">
-                    Line total: ${fmt(calcLineTotal(item))}
+                    Line total: ${fmt(lineItemTotal(item))}
                   </span>
                   <button
                     onClick={() => removeItem(i)}
@@ -577,7 +561,7 @@ export default function EstimateForm({
 
               {/* Desktop line total */}
               <div className="hidden lg:block text-right text-sm text-gray-600 mt-1 pr-10">
-                Line total: ${fmt(calcLineTotal(item))}
+                Line total: ${fmt(lineItemTotal(item))}
               </div>
             </div>
           ))}

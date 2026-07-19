@@ -49,16 +49,17 @@ async function callOpenAICompatible(
 const PROVIDERS: ProviderConfig[] = [
   {
     id: "anthropic",
-    name: "Claude Sonnet 4.5 (Anthropic)",
-    model: "claude-sonnet-4-5-20250929",
+    name: "Claude Sonnet 5 (Anthropic)",
+    model: "claude-sonnet-5",
     envKey: "ANTHROPIC_API_KEY",
     async call(prompt, apiKey) {
       const client = new Anthropic({ apiKey });
+      // Newer Anthropic models reject temperature/top_p. Thinking is disabled to
+      // keep this structured-JSON call fast and cheap (matching prior behavior).
       const message = await client.messages.create({
-        model: "claude-sonnet-4-5-20250929",
+        model: "claude-sonnet-5",
         max_tokens: 4096,
-        temperature: 0.2,
-        top_p: 0.9,
+        thinking: { type: "disabled" },
         messages: [{ role: "user", content: prompt }],
       });
       const textBlock = message.content.find((b) => b.type === "text");

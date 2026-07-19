@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helpers";
 import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
+import { estimateTotals, lineItemBreakdown } from "@/lib/estimate-calculations";
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -29,21 +30,8 @@ export async function GET(
   }
 
   // Calculate totals
-  let totalMaterials = 0;
-  let totalLabor = 0;
-  let totalMarkup = 0;
-
-  for (const item of estimate.lineItems) {
-    const materials = item.qty * item.unitCost;
-    const labor = item.laborHours * item.laborRate;
-    const subtotal = materials + labor;
-    const markup = subtotal * (item.markupPct / 100);
-    totalMaterials += materials;
-    totalLabor += labor;
-    totalMarkup += markup;
-  }
-
-  const grandTotal = totalMaterials + totalLabor + totalMarkup;
+  const { materials: totalMaterials, labor: totalLabor, markup: totalMarkup, total: grandTotal } =
+    estimateTotals(estimate.lineItems);
 
   // Build PDF
   const doc = new PDFDocument({ margin: 50, size: "LETTER" });
@@ -105,12 +93,10 @@ export async function GET(
       y = 50;
     }
 
-    const materials = item.qty * item.unitCost;
-    const labor = item.laborHours * item.laborRate;
-    const subtotal = materials + labor;
-    const markup = subtotal * (item.markupPct / 100);
-    const lineTotal = subtotal + markup;
+    const { materials, labor, total: lineTotal } = lineItemBreakdown(item);
 
+    // Advance by the wrapped name height so long names don't overlap the next row
+    const rowHeight = Math.max(16, doc.heightOfString(item.name, { width: 195 }) + 4);
     doc.text(item.name, col.name, y, { width: 195 });
     doc.text(String(item.qty), col.qty, y);
     doc.text(item.unit, col.unit, y);
@@ -118,7 +104,13 @@ export async function GET(
     doc.text(`$${fmt(labor)}`, col.labor, y);
     doc.text(`$${fmt(lineTotal)}`, col.total, y);
 
-    y += 16;
+    y += rowHeight;
+  }
+
+  // Keep the totals block from running off the bottom of the page
+  if (y > 650) {
+    doc.addPage();
+    y = 50;
   }
 
   // Totals
@@ -150,10 +142,14 @@ export async function GET(
 
   const pdfBuffer = await pdfDone;
 
+  // Sanitize the job name for the filename so it can't inject into the header
+  const safeJob =
+    estimate.jobName.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "estimate";
+
   return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="estimate-${estimate.jobName.replace(/\s+/g, "-")}.pdf"`,
+      "Content-Disposition": `attachment; filename="estimate-${safeJob}.pdf"`,
     },
   });
 }

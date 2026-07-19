@@ -2,17 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Dashboard from "./Dashboard";
-
-function calcTotal(lineItems: { qty: number; unitCost: number; laborHours: number; laborRate: number; markupPct: number }[]) {
-  let total = 0;
-  for (const item of lineItems) {
-    const materials = item.qty * item.unitCost;
-    const labor = item.laborHours * item.laborRate;
-    const subtotal = materials + labor;
-    total += subtotal + subtotal * (item.markupPct / 100);
-  }
-  return total;
-}
+import { estimateTotal } from "@/lib/estimate-calculations";
 
 export default async function Home() {
   const session = await auth();
@@ -55,7 +45,7 @@ export default async function Home() {
     jobName: est.jobName,
     customerName: est.customerName,
     status: est.status,
-    total: calcTotal(est.lineItems),
+    total: estimateTotal(est.lineItems),
     createdAt: est.createdAt.toISOString(),
   }));
 
