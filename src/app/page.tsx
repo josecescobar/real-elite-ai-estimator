@@ -54,6 +54,7 @@ export default async function Home() {
     draft: { count: 0, total: 0 },
     sent: { count: 0, total: 0 },
     approved: { count: 0, total: 0 },
+    changes_requested: { count: 0, total: 0 },
   };
   for (const est of summaries) {
     const key = est.status as keyof typeof stats;

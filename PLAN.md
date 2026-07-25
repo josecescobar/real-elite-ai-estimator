@@ -63,10 +63,10 @@
 
 ## P4 — UX polish
 
-- [ ] Dashboard: `changes_requested` estimates have no stat card (only visible under "All").
-- [ ] Redirect `/login` and `/signup` to the dashboard when already signed in.
-- [ ] Estimates list: search + pagination once the list grows past ~50.
-- [ ] Empty-state for the AI provider dropdown when no keys are configured (currently a generic 500 message).
+- [x] Dashboard: added a "Changes" stat card + filter for `changes_requested` estimates (grid now 5-up), so they're no longer only visible under "All".
+- [x] Redirect `/login` and `/signup` to the dashboard when already signed in — handled in the proxy (signed-in users on those paths get a redirect to `/`). Verified logged-out access to both pages is unchanged.
+- [ ] Estimates list: search + pagination once the list grows past ~50. *(Deferred — premature at current scale; the list is a server component, so this means a small client wrapper for filter + "show more".)*
+- [x] Empty-state for the AI provider dropdown when no keys are configured — the AI Suggest modal now shows a clear "No AI providers configured…" message and disables the Generate button, instead of failing with a generic 500.
 
 ---
 

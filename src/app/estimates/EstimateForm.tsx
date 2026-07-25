@@ -694,7 +694,11 @@ export default function EstimateForm({
                 <div className="text-sm text-gray-500">
                   Using <span className="font-medium text-gray-700">{aiProviders[0].name}</span>
                 </div>
-              ) : null}
+              ) : (
+                <div className="bg-yellow-50 text-yellow-800 px-4 py-2 rounded-lg text-sm">
+                  No AI providers configured. Add an API key (e.g. <code>ANTHROPIC_API_KEY</code>) to your environment to enable AI suggestions.
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Job Type <span className="text-gray-400">(optional)</span>
@@ -732,7 +736,7 @@ export default function EstimateForm({
                 </button>
                 <button
                   onClick={handleAiSuggest}
-                  disabled={aiLoading || !aiDescription.trim()}
+                  disabled={aiLoading || !aiDescription.trim() || (!aiProvidersLoading && aiProviders.length === 0)}
                   className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50"
                 >
                   {aiLoading ? "Generating..." : "Generate Line Items"}
