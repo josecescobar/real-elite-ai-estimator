@@ -24,6 +24,9 @@ export default function Nav() {
               <Link href="/projects" className="text-gray-600 hover:text-blue-700 font-medium">
                 Projects
               </Link>
+              <Link href="/insights" className="text-gray-600 hover:text-blue-700 font-medium">
+                Insights
+              </Link>
               <Link
                 href="/estimates/new"
                 className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 font-medium text-sm"
