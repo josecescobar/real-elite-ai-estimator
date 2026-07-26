@@ -2,7 +2,9 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Dashboard from "./Dashboard";
+import DashboardActivity from "./DashboardActivity";
 import { estimateTotal } from "@/lib/estimate-calculations";
+import { needsFollowUp } from "@/lib/insights";
 
 export default async function Home() {
   const session = await auth();
@@ -40,6 +42,34 @@ export default async function Home() {
     orderBy: { createdAt: "desc" },
   });
 
+  // Owner action center: estimates that have gone quiet + latest customer responses.
+  const now = new Date();
+  const followUps = needsFollowUp(estimates, now)
+    .slice(0, 5)
+    .map((e) => ({
+      id: e.id,
+      jobName: e.jobName,
+      customerName: e.customerName,
+      total: estimateTotal(e.lineItems),
+      daysAgo: Math.floor((now.getTime() - e.createdAt.getTime()) / 86_400_000),
+    }));
+
+  const responses = await prisma.customerResponse.findMany({
+    where: { estimate: { userId: session.user.id } },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    include: { estimate: { select: { id: true, jobName: true, customerName: true } } },
+  });
+  const recentResponses = responses.map((r) => ({
+    id: r.id,
+    status: r.status,
+    message: r.message,
+    createdAt: r.createdAt.toISOString(),
+    estimateId: r.estimate.id,
+    jobName: r.estimate.jobName,
+    customerName: r.estimate.customerName,
+  }));
+
   const summaries = estimates.map((est) => ({
     id: est.id,
     jobName: est.jobName,
@@ -67,6 +97,7 @@ export default async function Home() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <DashboardActivity followUps={followUps} recentResponses={recentResponses} />
       <Dashboard estimates={summaries} stats={stats} />
     </div>
   );

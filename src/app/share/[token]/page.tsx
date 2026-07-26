@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import CustomerResponseForm from "./CustomerResponseForm";
 import { estimateTotals, lineItemBreakdown } from "@/lib/estimate-calculations";
+import { getCompanyProfile } from "@/lib/company";
 
 function fmt(n: number) {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -37,21 +38,32 @@ export default async function SharePage({
   };
 
   const latestResponse = estimate.customerResponses[0];
+  const company = getCompanyProfile();
+  const contactLine = [company.phone, company.email].filter(Boolean).join("  ·  ");
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Estimate</h1>
-        <p className="text-gray-500 mt-1">Real Elite AI Estimator</p>
+        <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
+        <p className="text-gray-500 mt-1">Estimate</p>
+        {contactLine && <p className="text-gray-400 text-sm mt-0.5">{contactLine}</p>}
       </div>
 
       {/* Estimate info */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-xl font-semibold">{estimate.jobName}</h2>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[estimate.status] || statusColors.draft}`}>
-            {estimate.status.replace("_", " ")}
-          </span>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">{estimate.jobName}</h2>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[estimate.status] || statusColors.draft}`}>
+              {estimate.status.replace("_", " ")}
+            </span>
+          </div>
+          <a
+            href={`/api/share/${token}/pdf`}
+            className="shrink-0 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm font-medium"
+          >
+            Download PDF
+          </a>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div>

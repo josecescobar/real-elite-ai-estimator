@@ -65,19 +65,37 @@
 
 - [x] Dashboard: added a "Changes" stat card + filter for `changes_requested` estimates (grid now 5-up), so they're no longer only visible under "All".
 - [x] Redirect `/login` and `/signup` to the dashboard when already signed in — handled in the proxy (signed-in users on those paths get a redirect to `/`). Verified logged-out access to both pages is unchanged.
-- [ ] Estimates list: search + pagination once the list grows past ~50. *(Deferred — premature at current scale; the list is a server component, so this means a small client wrapper for filter + "show more".)*
+- [x] Estimates list: **search + status filter** shipped — a client wrapper (`EstimatesList.tsx`) with live text search (job / customer / address) and status-filter chips with counts. *(Pagination / "show more" still deferred until the list grows past a few hundred — search covers the pain at current scale.)*
 - [x] Empty-state for the AI provider dropdown when no keys are configured — the AI Suggest modal now shows a clear "No AI providers configured…" message and disables the Generate button, instead of failing with a generic 500.
 
 ---
+
+## Shipped beyond the original backlog (2026-07-26)
+
+Feature work added after the P0–P4 cleanup — all migration-free (no schema change, so production-safe), no new paid services:
+
+- **Insights page (`/insights`)** — win rate, revenue won, open pipeline, average estimate value, a 6-month activity trend, pipeline-by-status bars, and a "needs follow-up" list (sent estimates quiet for 7+ days). Metrics live in `src/lib/insights.ts` with 12 unit tests.
+- **Duplicate estimate** — `POST /api/estimates/[id]/duplicate` + a Duplicate button; clones details + line items into a fresh draft for repeat / revised jobs.
+- **Branded, professional PDF** — company name / contact / license header, estimate #, date + valid-until (30 days), a terms paragraph, and a customer signature/acceptance block. Company details come from `COMPANY_*` env vars (default: Real Elite Contracting) — no schema change. The customer share page shows the company name too.
+
+Second batch (same day):
+
+- **Estimates list search + status filter** — `EstimatesList.tsx` client wrapper: live search over job / customer / address and status-filter chips with live counts. (Closes the P4 list-search item.)
+- **CSV export** — `GET /api/estimates/export` streams an RFC-4180 CSV (one row per estimate, with computed materials / labor / markup / total) for bookkeeping; "Export CSV" button on the list. Builder is `src/lib/csv-export.ts` with 9 unit tests (escaping, totals, empty items).
+- **Customer PDF download** — the branded PDF generator was extracted to `src/lib/estimate-pdf.ts` (6 unit tests incl. pagination + filename injection safety) and is now reachable by the customer via `GET /api/share/[token]/pdf` (token-gated, no login) with a "Download PDF" button on the share page.
+- **Email to customer** — an "Email to Customer" button on a shared estimate opens the contractor's mail client with a pre-filled subject/body and the share link (recipient auto-filled from the linked client's email). Zero-config `mailto:` — no email provider or API key. Builder is `src/lib/estimate-email.ts` with 8 unit tests (subject/body/recipient, `%20` encoding). Delivers a no-dependency slice of the roadmap's v1.0 "email the share link".
+- **Dashboard action center** — the home dashboard now leads with two panels (`DashboardActivity.tsx`): "Needs follow-up" (sent estimates quiet 7+ days, reusing the tested `needsFollowUp`) and "Recent customer activity" (latest customer responses across all estimates). Renders nothing for a brand-new account. Surfaces the roadmap's v1.0 "notify me when a customer approves/requests changes" in-app (no email dependency); a real push/email notifier is still open.
+
+This delivers the roadmap's "PDF branding" (v1.0) and "Duplicate an estimate" (v1.1) early, plus the Insights dashboard, list search, CSV export, mailto delivery, and the dashboard action center (all new). Test suite is 47 tests.
 
 ## Product roadmap (proposed — not yet committed)
 
 The audit backlog above is about making what exists solid. These are the next *features*, in suggested order, sized for a solo operator:
 
 **v1.0 — "Send it" (get estimates in front of customers without leaving the app)**
-- Email the share link to the client directly (e.g. Resend) with a branded template; auto-set status to `sent`.
+- Email the share link to the client directly. *(A zero-config `mailto:` version shipped — see "Shipped beyond" above. A fully integrated send via a provider like Resend with a branded template + delivery tracking is still open.)*
 - PDF branding: Real Elite Contracting logo, license #, phone/email, payment terms, and a signature line.
-- Notify Jose (email) when a customer approves or requests changes — right now responses are only visible by opening the estimate.
+- Notify Jose when a customer approves or requests changes. *(Shipped in-app: the dashboard action center now surfaces recent responses + follow-ups — see "Shipped beyond" above. A real email/push notifier is still open.)*
 
 **v1.1 — Faster quoting**
 - Price book / cost catalog: save frequently used line items (shingle tear-off, deck framing, LVP install…) and insert them with one click; let AI Suggest draw from the catalog for pricing consistency.
