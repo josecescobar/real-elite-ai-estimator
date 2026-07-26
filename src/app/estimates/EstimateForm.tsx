@@ -77,6 +77,7 @@ export default function EstimateForm({
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [customerName, setCustomerName] = useState(initial?.customerName || "");
   const [jobName, setJobName] = useState(initial?.jobName || initialJobType || "");
   const [address, setAddress] = useState(initial?.address || "");
@@ -200,6 +201,21 @@ export default function EstimateForm({
       alert("Error deleting estimate");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleDuplicate() {
+    if (!initial?.id) return;
+    setDuplicating(true);
+    try {
+      const res = await fetch(`/api/estimates/${initial.id}/duplicate`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to duplicate");
+      const data = await res.json();
+      router.push(`/estimates/${data.id}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error duplicating estimate");
+    } finally {
+      setDuplicating(false);
     }
   }
 
@@ -655,6 +671,13 @@ export default function EstimateForm({
             >
               Download PDF
             </a>
+            <button
+              onClick={handleDuplicate}
+              disabled={duplicating}
+              className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
+            >
+              {duplicating ? "Duplicating..." : "Duplicate"}
+            </button>
             <button
               onClick={handleDelete}
               disabled={deleting}
