@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import EstimateForm from "../EstimateForm";
+import { getCompanyProfile } from "@/lib/company";
 
 export default async function EditEstimatePage({
   params,
@@ -29,6 +30,7 @@ export default async function EditEstimatePage({
     <div>
       <h1 className="text-2xl font-bold mb-6">Edit Estimate</h1>
       <EstimateForm
+        companyName={getCompanyProfile().name}
         initial={{
           id: estimate.id,
           customerName: estimate.customerName,
