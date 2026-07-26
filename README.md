@@ -22,6 +22,7 @@ Built with Next.js 16 (App Router), Prisma 7 + Turso (libSQL), NextAuth v5, Tail
 - **CSV export** — download all estimates as a spreadsheet-ready CSV for bookkeeping/accounting.
 - **Email to customer** — one click opens your mail app with a pre-filled message and the share link (recipient auto-filled from the linked client). No email service or API key required.
 - **Dashboard action center** — the home page surfaces estimates that have gone quiet (need follow-up) and your latest customer responses, so approvals and stalled quotes are visible at a glance instead of buried inside each estimate.
+- **Manual status control** — set an estimate's status yourself (draft / sent / approved / changes requested), e.g. to record a phone approval, so the win-rate and follow-up metrics stay accurate.
 
 ## Getting started
 
@@ -93,6 +94,7 @@ src/
 │   ├── company.ts           # Company profile (env-driven) for PDF + share
 │   ├── estimate-pdf.ts      # Branded PDF generator (owner + customer routes)
 │   ├── estimate-email.ts    # Pre-filled mailto builder (send share link)
+│   ├── estimate-status.ts   # Estimate status constants + validation
 │   ├── csv-export.ts        # Estimates → CSV for bookkeeping export
 │   └── rate-limit.ts        # Shared in-memory rate limiter
 └── app/
@@ -104,7 +106,7 @@ src/
     ├── share/[token]/            # Public customer portal page
     └── api/
         ├── auth/                 # NextAuth handlers + signup
-        ├── estimates/            # CRUD + /pdf + /share + /respond + /duplicate + /export
+        ├── estimates/            # CRUD + /pdf + /share + /respond + /duplicate + /export + /status
         ├── share/[token]/pdf     # Public (token-gated) customer PDF download
         ├── clients/ · projects/  # CRUD
         └── ai/                   # providers, suggest, score-description
