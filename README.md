@@ -18,11 +18,12 @@ Built with Next.js 16 (App Router), Prisma 7 + Turso (libSQL), NextAuth v5, Tail
 - **Insights dashboard** — win rate, revenue won, open pipeline, average job size, a 6-month activity trend, and a follow-up list for estimates that have gone quiet.
 - **Duplicate estimates** — one-click clone for repeat customers and revised quotes.
 - **Branded PDF export** — professional, downloadable PDF per estimate with your company header, license #, validity date, terms, and a customer signature/acceptance block (configured via `COMPANY_*` env vars). Customers can download it themselves right from the share link.
-- **Search & filter** — live search (job, customer, address) and status filter on the estimates list.
+- **Search, filter & sort** — live search (job, customer, address), status filter, and sort (newest / oldest / highest / lowest total) on the estimates list.
 - **CSV export** — download all estimates as a spreadsheet-ready CSV for bookkeeping/accounting.
 - **Email to customer** — one click opens your mail app with a pre-filled message and the share link (recipient auto-filled from the linked client). No email service or API key required.
 - **Dashboard action center** — the home page surfaces estimates that have gone quiet (need follow-up) and your latest customer responses, so approvals and stalled quotes are visible at a glance instead of buried inside each estimate.
 - **Manual status control** — set an estimate's status yourself (draft / sent / approved / changes requested), e.g. to record a phone approval, so the win-rate and follow-up metrics stay accurate.
+- **Per-client performance** — each client page shows that client's win rate, revenue won, open pipeline, and estimate count at a glance.
 
 ## Getting started
 
