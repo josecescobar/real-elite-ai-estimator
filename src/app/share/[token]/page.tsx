@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import CustomerResponseForm from "./CustomerResponseForm";
 import { estimateTotals, lineItemBreakdown } from "@/lib/estimate-calculations";
+import { getCompanyProfile } from "@/lib/company";
 
 function fmt(n: number) {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -37,12 +38,15 @@ export default async function SharePage({
   };
 
   const latestResponse = estimate.customerResponses[0];
+  const company = getCompanyProfile();
+  const contactLine = [company.phone, company.email].filter(Boolean).join("  ·  ");
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Estimate</h1>
-        <p className="text-gray-500 mt-1">Real Elite AI Estimator</p>
+        <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
+        <p className="text-gray-500 mt-1">Estimate</p>
+        {contactLine && <p className="text-gray-400 text-sm mt-0.5">{contactLine}</p>}
       </div>
 
       {/* Estimate info */}

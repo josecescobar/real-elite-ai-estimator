@@ -15,7 +15,9 @@ Built with Next.js 16 (App Router), Prisma 7 + Turso (libSQL), NextAuth v5, Tail
 - **Clients & Projects** — manage clients and projects, link estimates to them, see per-client totals.
 - **Customer portal** — generate a tokenized share link; the customer can approve or request changes (with a message) without an account. Links are revocable.
 - **Status tracking** — `draft → sent → approved / changes_requested`, with a filterable stats dashboard.
-- **PDF export** — customer-friendly PDF download per estimate.
+- **Insights dashboard** — win rate, revenue won, open pipeline, average job size, a 6-month activity trend, and a follow-up list for estimates that have gone quiet.
+- **Duplicate estimates** — one-click clone for repeat customers and revised quotes.
+- **Branded PDF export** — professional, downloadable PDF per estimate with your company header, license #, validity date, terms, and a customer signature/acceptance block (configured via `COMPANY_*` env vars).
 
 ## Getting started
 
@@ -62,8 +64,10 @@ Open [http://localhost:3000](http://localhost:3000) and create an account.
 | `OPENAI_API_KEY` | optional | Enables the GPT provider |
 | `GROQ_API_KEY` | optional | Enables the Llama (Groq) provider |
 | `GEMINI_API_KEY` | optional | Enables the Gemini provider |
+| `COMPANY_NAME` | optional | Business name on the estimate PDF and customer share page (default: `Real Elite Contracting`) |
+| `COMPANY_PHONE` / `COMPANY_EMAIL` / `COMPANY_LICENSE` / `COMPANY_ADDRESS` / `COMPANY_WEBSITE` | optional | Contact/license details shown on the branded PDF and share page |
 
-At least one AI key is needed for AI Suggest and AI description tips; the rest of the app works without any.
+At least one AI key is needed for AI Suggest and AI description tips; the rest of the app works without any. The `COMPANY_*` vars brand the customer-facing PDF and share page.
 
 ## Project structure
 
@@ -73,23 +77,27 @@ prisma/
 ├── migrations/              # SQL migrations
 └── seed.mts                 # Demo data seed (destructive — see PLAN.md)
 src/
-├── middleware.ts            # Auth gate for app + API routes
+├── proxy.ts                 # Auth gate for app + API routes (Next 16 proxy)
 ├── lib/
 │   ├── prisma.ts            # Prisma client (libSQL adapter)
 │   ├── auth.ts              # NextAuth v5 config (credentials provider)
-│   ├── auth-helpers.ts      # getAuthUser() for API routes
+│   ├── auth-helpers.ts      # getAuthUser() + relation-ownership checks
 │   ├── ai-providers.ts      # Provider registry (Anthropic/OpenAI/Groq/Gemini)
-│   ├── estimate-calculations.ts  # Line-item validation + totals math
-│   └── description-scoring.ts    # Heuristic description quality score
+│   ├── estimate-calculations.ts  # Line-item validation + shared totals math
+│   ├── description-scoring.ts    # Heuristic description quality score
+│   ├── insights.ts          # Business metrics for the Insights page
+│   ├── company.ts           # Company profile (env-driven) for PDF + share
+│   └── rate-limit.ts        # Shared in-memory rate limiter
 └── app/
     ├── page.tsx / Dashboard.tsx  # Stats dashboard (or landing page when signed out)
     ├── login/ · signup/          # Auth pages
     ├── estimates/                # List, new (description-first flow), edit, form
     ├── clients/ · projects/      # CRUD pages
+    ├── insights/                 # Business insights dashboard
     ├── share/[token]/            # Public customer portal page
     └── api/
         ├── auth/                 # NextAuth handlers + signup
-        ├── estimates/            # CRUD + /pdf + /share + /respond (public)
+        ├── estimates/            # CRUD + /pdf + /share + /respond + /duplicate
         ├── clients/ · projects/  # CRUD
         └── ai/                   # providers, suggest, score-description
 ```

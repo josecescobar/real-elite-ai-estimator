@@ -70,6 +70,16 @@
 
 ---
 
+## Shipped beyond the original backlog (2026-07-26)
+
+Feature work added after the P0–P4 cleanup — all migration-free (no schema change, so production-safe), no new paid services:
+
+- **Insights page (`/insights`)** — win rate, revenue won, open pipeline, average estimate value, a 6-month activity trend, pipeline-by-status bars, and a "needs follow-up" list (sent estimates quiet for 7+ days). Metrics live in `src/lib/insights.ts` with 12 unit tests.
+- **Duplicate estimate** — `POST /api/estimates/[id]/duplicate` + a Duplicate button; clones details + line items into a fresh draft for repeat / revised jobs.
+- **Branded, professional PDF** — company name / contact / license header, estimate #, date + valid-until (30 days), a terms paragraph, and a customer signature/acceptance block. Company details come from `COMPANY_*` env vars (default: Real Elite Contracting) — no schema change. The customer share page shows the company name too.
+
+This delivers the roadmap's "PDF branding" (v1.0) and "Duplicate an estimate" (v1.1) early, plus the Insights dashboard (new).
+
 ## Product roadmap (proposed — not yet committed)
 
 The audit backlog above is about making what exists solid. These are the next *features*, in suggested order, sized for a solo operator:
