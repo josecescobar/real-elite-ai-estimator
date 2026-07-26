@@ -65,7 +65,7 @@
 
 - [x] Dashboard: added a "Changes" stat card + filter for `changes_requested` estimates (grid now 5-up), so they're no longer only visible under "All".
 - [x] Redirect `/login` and `/signup` to the dashboard when already signed in — handled in the proxy (signed-in users on those paths get a redirect to `/`). Verified logged-out access to both pages is unchanged.
-- [ ] Estimates list: search + pagination once the list grows past ~50. *(Deferred — premature at current scale; the list is a server component, so this means a small client wrapper for filter + "show more".)*
+- [x] Estimates list: **search + status filter** shipped — a client wrapper (`EstimatesList.tsx`) with live text search (job / customer / address) and status-filter chips with counts. *(Pagination / "show more" still deferred until the list grows past a few hundred — search covers the pain at current scale.)*
 - [x] Empty-state for the AI provider dropdown when no keys are configured — the AI Suggest modal now shows a clear "No AI providers configured…" message and disables the Generate button, instead of failing with a generic 500.
 
 ---
@@ -78,7 +78,13 @@ Feature work added after the P0–P4 cleanup — all migration-free (no schema c
 - **Duplicate estimate** — `POST /api/estimates/[id]/duplicate` + a Duplicate button; clones details + line items into a fresh draft for repeat / revised jobs.
 - **Branded, professional PDF** — company name / contact / license header, estimate #, date + valid-until (30 days), a terms paragraph, and a customer signature/acceptance block. Company details come from `COMPANY_*` env vars (default: Real Elite Contracting) — no schema change. The customer share page shows the company name too.
 
-This delivers the roadmap's "PDF branding" (v1.0) and "Duplicate an estimate" (v1.1) early, plus the Insights dashboard (new).
+Second batch (same day):
+
+- **Estimates list search + status filter** — `EstimatesList.tsx` client wrapper: live search over job / customer / address and status-filter chips with live counts. (Closes the P4 list-search item.)
+- **CSV export** — `GET /api/estimates/export` streams an RFC-4180 CSV (one row per estimate, with computed materials / labor / markup / total) for bookkeeping; "Export CSV" button on the list. Builder is `src/lib/csv-export.ts` with 9 unit tests (escaping, totals, empty items).
+- **Customer PDF download** — the branded PDF generator was extracted to `src/lib/estimate-pdf.ts` (6 unit tests incl. pagination + filename injection safety) and is now reachable by the customer via `GET /api/share/[token]/pdf` (token-gated, no login) with a "Download PDF" button on the share page.
+
+This delivers the roadmap's "PDF branding" (v1.0) and "Duplicate an estimate" (v1.1) early, plus the Insights dashboard, list search, and CSV export (all new). Test suite is now 39 tests.
 
 ## Product roadmap (proposed — not yet committed)
 

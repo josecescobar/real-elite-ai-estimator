@@ -17,7 +17,9 @@ Built with Next.js 16 (App Router), Prisma 7 + Turso (libSQL), NextAuth v5, Tail
 - **Status tracking** — `draft → sent → approved / changes_requested`, with a filterable stats dashboard.
 - **Insights dashboard** — win rate, revenue won, open pipeline, average job size, a 6-month activity trend, and a follow-up list for estimates that have gone quiet.
 - **Duplicate estimates** — one-click clone for repeat customers and revised quotes.
-- **Branded PDF export** — professional, downloadable PDF per estimate with your company header, license #, validity date, terms, and a customer signature/acceptance block (configured via `COMPANY_*` env vars).
+- **Branded PDF export** — professional, downloadable PDF per estimate with your company header, license #, validity date, terms, and a customer signature/acceptance block (configured via `COMPANY_*` env vars). Customers can download it themselves right from the share link.
+- **Search & filter** — live search (job, customer, address) and status filter on the estimates list.
+- **CSV export** — download all estimates as a spreadsheet-ready CSV for bookkeeping/accounting.
 
 ## Getting started
 
@@ -87,17 +89,20 @@ src/
 │   ├── description-scoring.ts    # Heuristic description quality score
 │   ├── insights.ts          # Business metrics for the Insights page
 │   ├── company.ts           # Company profile (env-driven) for PDF + share
+│   ├── estimate-pdf.ts      # Branded PDF generator (owner + customer routes)
+│   ├── csv-export.ts        # Estimates → CSV for bookkeeping export
 │   └── rate-limit.ts        # Shared in-memory rate limiter
 └── app/
     ├── page.tsx / Dashboard.tsx  # Stats dashboard (or landing page when signed out)
     ├── login/ · signup/          # Auth pages
-    ├── estimates/                # List, new (description-first flow), edit, form
+    ├── estimates/                # List (search/filter), new (description-first flow), edit, form
     ├── clients/ · projects/      # CRUD pages
     ├── insights/                 # Business insights dashboard
     ├── share/[token]/            # Public customer portal page
     └── api/
         ├── auth/                 # NextAuth handlers + signup
-        ├── estimates/            # CRUD + /pdf + /share + /respond + /duplicate
+        ├── estimates/            # CRUD + /pdf + /share + /respond + /duplicate + /export
+        ├── share/[token]/pdf     # Public (token-gated) customer PDF download
         ├── clients/ · projects/  # CRUD
         └── ai/                   # providers, suggest, score-description
 ```
