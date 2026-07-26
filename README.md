@@ -21,6 +21,7 @@ Built with Next.js 16 (App Router), Prisma 7 + Turso (libSQL), NextAuth v5, Tail
 - **Search & filter** — live search (job, customer, address) and status filter on the estimates list.
 - **CSV export** — download all estimates as a spreadsheet-ready CSV for bookkeeping/accounting.
 - **Email to customer** — one click opens your mail app with a pre-filled message and the share link (recipient auto-filled from the linked client). No email service or API key required.
+- **Dashboard action center** — the home page surfaces estimates that have gone quiet (need follow-up) and your latest customer responses, so approvals and stalled quotes are visible at a glance instead of buried inside each estimate.
 
 ## Getting started
 
