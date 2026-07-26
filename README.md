@@ -20,6 +20,7 @@ Built with Next.js 16 (App Router), Prisma 7 + Turso (libSQL), NextAuth v5, Tail
 - **Branded PDF export** — professional, downloadable PDF per estimate with your company header, license #, validity date, terms, and a customer signature/acceptance block (configured via `COMPANY_*` env vars). Customers can download it themselves right from the share link.
 - **Search & filter** — live search (job, customer, address) and status filter on the estimates list.
 - **CSV export** — download all estimates as a spreadsheet-ready CSV for bookkeeping/accounting.
+- **Email to customer** — one click opens your mail app with a pre-filled message and the share link (recipient auto-filled from the linked client). No email service or API key required.
 
 ## Getting started
 
@@ -90,6 +91,7 @@ src/
 │   ├── insights.ts          # Business metrics for the Insights page
 │   ├── company.ts           # Company profile (env-driven) for PDF + share
 │   ├── estimate-pdf.ts      # Branded PDF generator (owner + customer routes)
+│   ├── estimate-email.ts    # Pre-filled mailto builder (send share link)
 │   ├── csv-export.ts        # Estimates → CSV for bookkeeping export
 │   └── rate-limit.ts        # Shared in-memory rate limiter
 └── app/

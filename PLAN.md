@@ -83,15 +83,16 @@ Second batch (same day):
 - **Estimates list search + status filter** — `EstimatesList.tsx` client wrapper: live search over job / customer / address and status-filter chips with live counts. (Closes the P4 list-search item.)
 - **CSV export** — `GET /api/estimates/export` streams an RFC-4180 CSV (one row per estimate, with computed materials / labor / markup / total) for bookkeeping; "Export CSV" button on the list. Builder is `src/lib/csv-export.ts` with 9 unit tests (escaping, totals, empty items).
 - **Customer PDF download** — the branded PDF generator was extracted to `src/lib/estimate-pdf.ts` (6 unit tests incl. pagination + filename injection safety) and is now reachable by the customer via `GET /api/share/[token]/pdf` (token-gated, no login) with a "Download PDF" button on the share page.
+- **Email to customer** — an "Email to Customer" button on a shared estimate opens the contractor's mail client with a pre-filled subject/body and the share link (recipient auto-filled from the linked client's email). Zero-config `mailto:` — no email provider or API key. Builder is `src/lib/estimate-email.ts` with 8 unit tests (subject/body/recipient, `%20` encoding). Delivers a no-dependency slice of the roadmap's v1.0 "email the share link".
 
-This delivers the roadmap's "PDF branding" (v1.0) and "Duplicate an estimate" (v1.1) early, plus the Insights dashboard, list search, and CSV export (all new). Test suite is now 39 tests.
+This delivers the roadmap's "PDF branding" (v1.0) and "Duplicate an estimate" (v1.1) early, plus the Insights dashboard, list search, CSV export, and mailto delivery (all new). Test suite is now 47 tests.
 
 ## Product roadmap (proposed — not yet committed)
 
 The audit backlog above is about making what exists solid. These are the next *features*, in suggested order, sized for a solo operator:
 
 **v1.0 — "Send it" (get estimates in front of customers without leaving the app)**
-- Email the share link to the client directly (e.g. Resend) with a branded template; auto-set status to `sent`.
+- Email the share link to the client directly. *(A zero-config `mailto:` version shipped — see "Shipped beyond" above. A fully integrated send via a provider like Resend with a branded template + delivery tracking is still open.)*
 - PDF branding: Real Elite Contracting logo, license #, phone/email, payment terms, and a signature line.
 - Notify Jose (email) when a customer approves or requests changes — right now responses are only visible by opening the estimate.
 
