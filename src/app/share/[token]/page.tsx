@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import CustomerResponseForm from "./CustomerResponseForm";
+import { estimateTotals, lineItemBreakdown } from "@/lib/estimate-calculations";
 
 function fmt(n: number) {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -25,20 +26,8 @@ export default async function SharePage({
   }
 
   // Calculate totals
-  let totalMaterials = 0;
-  let totalLabor = 0;
-  let totalMarkup = 0;
-
-  for (const item of estimate.lineItems) {
-    const materials = item.qty * item.unitCost;
-    const labor = item.laborHours * item.laborRate;
-    const subtotal = materials + labor;
-    totalMaterials += materials;
-    totalLabor += labor;
-    totalMarkup += subtotal * (item.markupPct / 100);
-  }
-
-  const grandTotal = totalMaterials + totalLabor + totalMarkup;
+  const { materials: totalMaterials, labor: totalLabor, markup: totalMarkup, total: grandTotal } =
+    estimateTotals(estimate.lineItems);
 
   const statusColors: Record<string, string> = {
     draft: "bg-gray-100 text-gray-700",
@@ -110,11 +99,7 @@ export default async function SharePage({
           </thead>
           <tbody>
             {estimate.lineItems.map((item) => {
-              const materials = item.qty * item.unitCost;
-              const labor = item.laborHours * item.laborRate;
-              const subtotal = materials + labor;
-              const markup = subtotal * (item.markupPct / 100);
-              const lineTotal = subtotal + markup;
+              const { materials, labor, total: lineTotal } = lineItemBreakdown(item);
 
               return (
                 <tr key={item.id} className="border-b border-gray-100">

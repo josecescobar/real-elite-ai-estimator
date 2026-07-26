@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy values so module load and `next build` don't fail. No real
+      # database is contacted at build time (all routes are server-rendered
+      # on demand), so these are never used for actual queries.
+      TURSO_DATABASE_URL: "file:./ci.db"
+      AUTH_SECRET: "ci-build-secret-not-used-at-runtime"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Generate the Prisma client before typecheck/lint — tsc imports it.
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

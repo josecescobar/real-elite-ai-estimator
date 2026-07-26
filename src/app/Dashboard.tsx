@@ -19,6 +19,7 @@ interface DashboardProps {
     draft: { count: number; total: number };
     sent: { count: number; total: number };
     approved: { count: number; total: number };
+    changes_requested: { count: number; total: number };
   };
 }
 
@@ -34,7 +35,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Dashboard({ estimates, stats }: DashboardProps) {
-  const [filter, setFilter] = useState<"all" | "draft" | "sent" | "approved">("all");
+  const [filter, setFilter] = useState<"all" | "draft" | "sent" | "approved" | "changes_requested">("all");
 
   const filtered = filter === "all"
     ? estimates
@@ -45,12 +46,13 @@ export default function Dashboard({ estimates, stats }: DashboardProps) {
     { key: "draft" as const, label: "Draft", color: "border-gray-400 bg-gray-50", textColor: "text-gray-700" },
     { key: "sent" as const, label: "Sent", color: "border-indigo-500 bg-indigo-50", textColor: "text-indigo-700" },
     { key: "approved" as const, label: "Approved", color: "border-green-500 bg-green-50", textColor: "text-green-700" },
+    { key: "changes_requested" as const, label: "Changes", color: "border-yellow-500 bg-yellow-50", textColor: "text-yellow-700" },
   ];
 
   return (
     <div>
       {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         {cards.map(({ key, label, color, textColor }) => (
           <button
             key={key}

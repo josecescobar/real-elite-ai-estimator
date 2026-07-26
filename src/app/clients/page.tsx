@@ -2,17 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-
-function calcTotal(lineItems: { qty: number; unitCost: number; laborHours: number; laborRate: number; markupPct: number }[]) {
-  let total = 0;
-  for (const item of lineItems) {
-    const materials = item.qty * item.unitCost;
-    const labor = item.laborHours * item.laborRate;
-    const subtotal = materials + labor;
-    total += subtotal + subtotal * (item.markupPct / 100);
-  }
-  return total;
-}
+import { estimateTotal } from "@/lib/estimate-calculations";
 
 export default async function ClientsPage() {
   const session = await auth();
@@ -47,7 +37,7 @@ export default async function ClientsPage() {
         <div className="grid gap-4">
           {clients.map((client) => {
             const totalDue = client.estimates.reduce(
-              (sum, est) => sum + calcTotal(est.lineItems),
+              (sum, est) => sum + estimateTotal(est.lineItems),
               0
             );
             return (

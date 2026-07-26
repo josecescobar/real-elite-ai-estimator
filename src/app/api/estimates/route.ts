@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth-helpers";
+import { getAuthUser, validateRelationOwnership } from "@/lib/auth-helpers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { customerName, jobName, address, notes, description, clientId, projectId, lineItems } = body;
+
+  const relError = await validateRelationOwnership(user!.id, clientId, projectId);
+  if (relError) return relError;
 
   const estimate = await prisma.estimate.create({
     data: {

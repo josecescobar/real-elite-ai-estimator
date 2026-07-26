@@ -2,17 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-
-function calcTotal(lineItems: { qty: number; unitCost: number; laborHours: number; laborRate: number; markupPct: number }[]) {
-  let total = 0;
-  for (const item of lineItems) {
-    const materials = item.qty * item.unitCost;
-    const labor = item.laborHours * item.laborRate;
-    const subtotal = materials + labor;
-    total += subtotal + subtotal * (item.markupPct / 100);
-  }
-  return total;
-}
+import { estimateTotal } from "@/lib/estimate-calculations";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -53,7 +43,7 @@ export default async function EstimatesPage() {
       ) : (
         <div className="grid gap-4">
           {estimates.map((est) => {
-            const total = calcTotal(est.lineItems);
+            const total = estimateTotal(est.lineItems);
             return (
               <Link
                 key={est.id}

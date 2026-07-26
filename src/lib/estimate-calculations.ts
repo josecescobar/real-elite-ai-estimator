@@ -116,3 +116,57 @@ export function validateAndNormalizeLineItems(raw: unknown): { items: AILineItem
 
   return { items, error: null };
 }
+
+// ---------------------------------------------------------------------------
+// Shared estimate totals (used by the dashboard, list pages, form, PDF, and
+// customer share page — previously copy-pasted in ~9 places).
+// ---------------------------------------------------------------------------
+
+/** Minimal shape needed to compute money totals for a line item. */
+export interface TotalsInput {
+  qty: number;
+  unitCost: number;
+  laborHours: number;
+  laborRate: number;
+  markupPct: number;
+}
+
+export interface EstimateTotals {
+  materials: number;
+  labor: number;
+  markup: number;
+  total: number;
+}
+
+/** Materials / labor / markup / total for a single line item (unrounded). */
+export function lineItemBreakdown(item: TotalsInput): EstimateTotals {
+  const materials = item.qty * item.unitCost;
+  const labor = item.laborHours * item.laborRate;
+  const markup = (materials + labor) * (item.markupPct / 100);
+  return { materials, labor, markup, total: materials + labor + markup };
+}
+
+/** Grand total for a single line item (materials + labor + markup). */
+export function lineItemTotal(item: TotalsInput): number {
+  return lineItemBreakdown(item).total;
+}
+
+/** Aggregate materials / labor / markup / total across line items (unrounded). */
+export function estimateTotals(items: TotalsInput[]): EstimateTotals {
+  return items.reduce<EstimateTotals>(
+    (acc, item) => {
+      const b = lineItemBreakdown(item);
+      acc.materials += b.materials;
+      acc.labor += b.labor;
+      acc.markup += b.markup;
+      acc.total += b.total;
+      return acc;
+    },
+    { materials: 0, labor: 0, markup: 0, total: 0 }
+  );
+}
+
+/** Grand total across all line items. */
+export function estimateTotal(items: TotalsInput[]): number {
+  return estimateTotals(items).total;
+}
