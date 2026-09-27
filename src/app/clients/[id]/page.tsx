@@ -4,6 +4,11 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import ClientForm from "../ClientForm";
 import { estimateTotal } from "@/lib/estimate-calculations";
+import { computeInsights } from "@/lib/insights";
+
+function fmt(n: number) {
+  return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -28,10 +33,45 @@ export default async function ClientDetailPage({
 
   if (!client || client.userId !== session.user.id) notFound();
 
+  const insights = client.estimates.length ? computeInsights(client.estimates, new Date()) : null;
+  const outstanding = insights
+    ? insights.byStatus.sent.count + insights.byStatus.changes_requested.count
+    : 0;
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Edit Client</h1>
       <ClientForm initial={client} />
+
+      {insights && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-4">Client performance</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <p className="text-sm text-gray-500">Estimates</p>
+              <p className="text-2xl font-bold text-gray-900">{insights.total.count}</p>
+              <p className="text-xs text-gray-400">${fmt(insights.total.value)} total</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <p className="text-sm text-gray-500">Revenue won</p>
+              <p className="text-2xl font-bold text-green-700">${fmt(insights.wonValue)}</p>
+              <p className="text-xs text-gray-400">{insights.byStatus.approved.count} approved</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <p className="text-sm text-gray-500">Open pipeline</p>
+              <p className="text-2xl font-bold text-blue-700">${fmt(insights.openPipelineValue)}</p>
+              <p className="text-xs text-gray-400">{outstanding} outstanding</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <p className="text-sm text-gray-500">Win rate</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {insights.winRate == null ? "—" : `${Math.round(insights.winRate * 100)}%`}
+              </p>
+              <p className="text-xs text-gray-400">approved ÷ sent</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {client.estimates.length > 0 && (
         <div className="mt-8">

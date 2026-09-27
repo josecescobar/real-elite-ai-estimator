@@ -36,6 +36,7 @@ function money(n: number) {
 export default function EstimatesList({ estimates }: { estimates: EstimateRow[] }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [sort, setSort] = useState("newest");
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: estimates.length };
@@ -56,17 +57,46 @@ export default function EstimatesList({ estimates }: { estimates: EstimateRow[] 
     });
   }, [estimates, query, status]);
 
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    const byDate = (a: EstimateRow, b: EstimateRow) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    switch (sort) {
+      case "oldest":
+        return arr.sort(byDate);
+      case "highest":
+        return arr.sort((a, b) => b.total - a.total);
+      case "lowest":
+        return arr.sort((a, b) => a.total - b.total);
+      default: // newest
+        return arr.sort((a, b) => byDate(b, a));
+    }
+  }, [filtered, sort]);
+
   return (
     <div>
       {/* Controls */}
       <div className="mb-4 space-y-3">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by job, customer, or address..."
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-        />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by job, customer, or address..."
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            aria-label="Sort estimates"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="highest">Highest total</option>
+            <option value="lowest">Lowest total</option>
+          </select>
+        </div>
         <div className="flex flex-wrap gap-2">
           {STATUS_FILTERS.map((f) => (
             <button
@@ -88,13 +118,13 @@ export default function EstimatesList({ estimates }: { estimates: EstimateRow[] 
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
           <p className="text-gray-500">No estimates match your search.</p>
         </div>
       ) : (
         <div className="grid gap-4">
-          {filtered.map((est) => (
+          {sorted.map((est) => (
             <Link
               key={est.id}
               href={`/estimates/${est.id}`}

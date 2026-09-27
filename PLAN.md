@@ -85,8 +85,13 @@ Second batch (same day):
 - **Customer PDF download** — the branded PDF generator was extracted to `src/lib/estimate-pdf.ts` (6 unit tests incl. pagination + filename injection safety) and is now reachable by the customer via `GET /api/share/[token]/pdf` (token-gated, no login) with a "Download PDF" button on the share page.
 - **Email to customer** — an "Email to Customer" button on a shared estimate opens the contractor's mail client with a pre-filled subject/body and the share link (recipient auto-filled from the linked client's email). Zero-config `mailto:` — no email provider or API key. Builder is `src/lib/estimate-email.ts` with 8 unit tests (subject/body/recipient, `%20` encoding). Delivers a no-dependency slice of the roadmap's v1.0 "email the share link".
 - **Dashboard action center** — the home dashboard now leads with two panels (`DashboardActivity.tsx`): "Needs follow-up" (sent estimates quiet 7+ days, reusing the tested `needsFollowUp`) and "Recent customer activity" (latest customer responses across all estimates). Renders nothing for a brand-new account. Surfaces the roadmap's v1.0 "notify me when a customer approves/requests changes" in-app (no email dependency); a real push/email notifier is still open.
+- **Manual status control** — the owner can set an estimate's status directly (draft / sent / approved / changes requested) via a validated `PATCH /api/estimates/[id]/status`, e.g. to record a phone approval — keeping the win-rate and follow-up metrics accurate. Status constants + validation live in `src/lib/estimate-status.ts` (single source of truth, 3 unit tests).
+- **Per-client performance** — the client detail page now shows a KPI row (estimates, revenue won, open pipeline, win rate) computed with the shared `computeInsights`. Migration-free.
+- **Estimates list sorting** — the list gained a sort control (newest / oldest / highest / lowest total) alongside the existing search + status filter.
 
-This delivers the roadmap's "PDF branding" (v1.0) and "Duplicate an estimate" (v1.1) early, plus the Insights dashboard, list search, CSV export, mailto delivery, and the dashboard action center (all new). Test suite is 47 tests.
+*(Batches 1–4 above shipped via PR #2, squash-merged to `main`. The manual status control is post-merge follow-up on the same branch.)*
+
+This delivers the roadmap's "PDF branding" (v1.0) and "Duplicate an estimate" (v1.1) early, plus the Insights dashboard, list search, CSV export, mailto delivery, the dashboard action center, and manual status control (all new). Test suite is 50 tests.
 
 ## Product roadmap (proposed — not yet committed)
 

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { lineItemTotal, estimateTotals } from "@/lib/estimate-calculations";
 import { buildMailtoLink } from "@/lib/estimate-email";
+import { ESTIMATE_STATUSES, STATUS_LABELS } from "@/lib/estimate-status";
 
 interface AIProvider {
   id: string;
@@ -95,6 +96,7 @@ export default function EstimateForm({
     initial?.lineItems?.length ? initial.lineItems : [{ ...emptyLineItem }]
   );
   const [status, setStatus] = useState(initial?.status || "draft");
+  const [statusSaving, setStatusSaving] = useState(false);
   const [shareToken, setShareToken] = useState(initial?.shareToken || null);
 
   // Fetch clients and projects
@@ -286,14 +288,49 @@ export default function EstimateForm({
     window.location.href = buildMailtoLink({ shareUrl, jobName, customerName, companyName, toEmail });
   }
 
+  async function changeStatus(newStatus: string) {
+    if (!initial?.id || newStatus === status) return;
+    const previous = status;
+    setStatus(newStatus); // optimistic
+    setStatusSaving(true);
+    try {
+      const res = await fetch(`/api/estimates/${initial.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+      router.refresh();
+    } catch (err) {
+      setStatus(previous); // revert on failure
+      alert(err instanceof Error ? err.message : "Error updating status");
+    } finally {
+      setStatusSaving(false);
+    }
+  }
+
   return (
     <div>
-      {/* Status badge for existing estimates */}
+      {/* Status badge + owner status control for existing estimates */}
       {initial?.id && (
-        <div className="mb-4 flex items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[status] || statusColors.draft}`}>
             {status.replace("_", " ")}
           </span>
+          <label className="flex items-center gap-2 text-sm text-gray-500">
+            <span>Set status:</span>
+            <select
+              value={status}
+              onChange={(e) => changeStatus(e.target.value)}
+              disabled={statusSaving}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
+            >
+              {ESTIMATE_STATUSES.map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              ))}
+            </select>
+          </label>
+          {statusSaving && <span className="text-xs text-gray-400">Saving…</span>}
         </div>
       )}
 
